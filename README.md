@@ -5,7 +5,7 @@ Plugin Claude Code : un workflow de développement complet — **feature, bug, e
 ## Installation
 
 ```text
-/plugin marketplace add <owner>/dev-suite
+/plugin marketplace add idir-a/dev-suite
 /plugin install dev-suite@dev-suite
 ```
 
