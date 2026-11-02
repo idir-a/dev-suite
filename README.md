@@ -2,7 +2,24 @@
 
 Plugin Claude Code : un workflow de développement complet — **feature, bug, epic ou POC** — d'un ticket, d'une maquette ou d'une description jusqu'au **commit local**. Chaque dépôt n'apporte qu'un **profil** (commandes, gates, conventions, spécificités).
 
-Documentation complète du workflow : [`docs/workflow.md`](docs/workflow.md).
+```mermaid
+flowchart TD
+    A["/dev-suite:dev &lt;ticket | maquette | texte&gt;"] --> P{Profil du dépôt ?}
+    P -- non --> I["/dev-suite:dev-init"] --> A
+    P -- oui --> M{Mode}
+    M --> S0["0. Préflight<br/>branche, baseline"]
+    S0 --> S1["1. Sources → grilling → spec"]
+    S1 --> G1(("⏸ spec"))
+    G1 --> S2["2. Plan + seams de test"]
+    S2 --> G2(("⏸ plan"))
+    G2 --> S3["3. Implémentation<br/>dev-executor"]
+    S3 --> S4["4. Revues ∥ + gates"]
+    S4 --> G3(("⏸ review"))
+    G3 -- "gate KO / finding retenu" --> S3
+    G3 -- accord --> S5["5. Rapport → push + MR ?"]
+```
+
+Documentation complète du workflow, avec tous les schémas : [`docs/workflow.md`](docs/workflow.md).
 
 ## Installation
 
