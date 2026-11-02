@@ -2,6 +2,8 @@
 
 Plugin Claude Code : un workflow de développement complet — **feature, bug, epic ou POC** — d'un ticket, d'une maquette ou d'une description jusqu'au **commit local**. Chaque dépôt n'apporte qu'un **profil** (commandes, gates, conventions, spécificités).
 
+Documentation complète du workflow : [`docs/workflow.md`](docs/workflow.md).
+
 ## Installation
 
 ```text
