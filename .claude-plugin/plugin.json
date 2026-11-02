@@ -1,0 +1,8 @@
+{
+  "name": "dev-suite",
+  "version": "0.1.0",
+  "description": "Workflow de développement réutilisable pour Claude Code : spec, plan, TDD, revues conformité/qualité/sécurité, gates et commit local, piloté par un profil par dépôt.",
+  "author": {
+    "name": "Idir Alileche"
+  }
+}
