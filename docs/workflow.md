@@ -6,15 +6,16 @@ Ce document décrit tout ce qui se passe entre `/dev-suite:dev <ticket>` et le c
 
 1. [Vue d'ensemble](#1-vue-densemble)
 2. [Démarrage : résolution du profil](#2-démarrage--résolution-du-profil)
-3. [Les étapes 0 à 5](#3-les-étapes-0-à-5)
+3. [Les étapes 0 à 6](#3-les-étapes-0-à-6)
 4. [Les pauses](#4-les-pauses)
-5. [Les modes : feature, bug, epic, POC](#5-les-modes)
+5. [Les modes : feature, bug, epic, POC, retour de recette](#5-les-modes)
 6. [Les agents](#6-les-agents)
 7. [Les revues et les gates](#7-les-revues-et-les-gates)
 8. [Le dossier de tâche](#8-le-dossier-de-tâche)
 9. [Le profil](#9-le-profil)
 10. [Garde-fous](#10-garde-fous)
 11. [Dépannage](#11-dépannage)
+12. [Apprendre d'un run : la rétro](#12-apprendre-dun-run--la-rétro)
 
 ---
 
@@ -35,12 +36,14 @@ flowchart TD
     S4 --> G3(("⏸ review"))
     G3 -- "gate KO / finding retenu" --> S3
     G3 -- accord --> S5["5. Rapport → push + MR ?"]
+    S5 --> S6["6. Rétro<br/>leçons proposées, appliquées sur accord"]
 ```
 
 Principes :
 
 - **La session décide, les agents exécutent.** Le spec, le plan, le diagnostic et la présentation des revues restent dans la session principale. Le code est écrit par `dev-executor` ; les revues sont faites par des agents en contexte neuf.
-- **Trois pauses obligatoires** : après le spec, après le plan, après la review. Rien n'avance sans ton accord.
+- **Trois pauses obligatoires** : après le spec, après le plan, après la review. Rien n'avance sans ton accord. Un petit ticket peut passer en [voie courte](#voie-courte) : une seule pause avant le code.
+- **Chaque run apprend.** Les frictions sont notées dans `journal.md` pendant le run ; la rétro de fin les transforme en propositions de règles, appliquées seulement sur ton accord.
 - **Tout finit en commit local.** Push et MR/PR uniquement sur un oui explicite, demandé à chaque fois.
 - **Un seul workflow, un profil par dépôt.** Le générique vit dans le plugin ; les commandes, conventions et pièges du projet vivent dans `~/.claude/dev-profiles/<nom>/`.
 
@@ -90,13 +93,14 @@ flowchart LR
     end
 ```
 
-## 3. Les étapes 0 à 5
+## 3. Les étapes 0 à 6
 
 ### Étape 0 — Préflight
 
 | Action | Détail |
 |---|---|
 | Titre de session | `<ticket> <ce qui va être fait>`, si l'outil de titre existe. |
+| Reprise ? | Un dossier de tâche existe pour ce ticket → l'étape atteinte est lue dans l'en-tête de `journal.md` et `git log`, et le run reprend là (ou bascule en mode retour de recette si le travail était livré). |
 | Travail déjà entamé ? | `git ls-remote --heads` filtré sur le ticket + statut et assigné du tracker. Branche existante ou autre dev assigné → question sur la base. |
 | Branche | Branche simple par défaut (`git status` doit être vide), `<prefix>/<ticket>-<slug>` depuis la base. Worktree **seulement sur demande**, toujours hors du dépôt. |
 | Dossier de tâche | Ajouté à `.git/info/exclude`. |
@@ -157,6 +161,9 @@ flowchart TD
 
 - Phases ordonnées, fichiers touchés, réutilisation de l'existant, impacts listés par le profil, docs à mettre à jour.
 - Toute omission par rapport au ticket ou à la maquette est listée et soumise.
+- **Ajouts hors ticket** : toute fonction, variante, prop, composant ou icône que le ticket ne demande pas est justifiée par un critère d'acceptation, ou listée et soumise ; par défaut, elle n'est pas ajoutée.
+- **Composant partagé** : un changement de comportement d'un composant ou util utilisé ailleurs est annoncé, avec ses autres usages et l'effet attendu sur chacun.
+- **Preuve de lecture des maquettes** : table « écran → nœud de maquette lu → screenshot ». Une ligne sans screenshot = maquette non lue.
 - **Seams de test** : les interfaces publiques qui seront testées, au plus haut niveau possible. Si rien n'est à tester (mise en page pure), c'est écrit.
 
 ⏸ **Pause 2 : accord sur le plan.**
@@ -231,6 +238,10 @@ flowchart TD
 
 S'il reste des commits `fixup!`, une question séparée propose d'abord `git rebase -i --autosquash <base>` — uniquement si la branche n'a jamais été poussée — avec relance du typecheck et des tests, et preuve que l'arbre final est identique. Branche déjà poussée : jamais de force push.
 
+### Étape 6 — Rétro
+
+Après ta réponse à la question push + MR (oui ou non), `dev-retro` relit le run et propose au plus 5 règles. Détail : [section 12](#12-apprendre-dun-run--la-rétro).
+
 ## 4. Les pauses
 
 Format fixe pour qu'elles se lisent vite :
@@ -240,7 +251,7 @@ Format fixe pour qu'elles se lisent vite :
 - **Review** : les gates passées en une ligne, puis seulement les findings à trancher.
 - **Rapport final** : actions numérotées avec durée estimée, puis la question push + MR.
 
-Une liste de tâches (une par étape, une seule en cours) affiche la progression.
+Une liste de tâches (une par étape, rétro comprise, une seule en cours) affiche la progression.
 
 ## 5. Les modes
 
@@ -250,6 +261,7 @@ Une liste de tâches (une par étape, une seule en cours) affiche la progression
 | Bug | ticket de type Bug, ou description d'un dysfonctionnement |
 | Epic | ticket de type Epic |
 | POC | argument `poc`, type Spike, ou « POC » dans le résumé ou les labels |
+| Retour de recette | ticket déjà traité (dossier de tâche ou commits existants), ou tableau/commentaires de recette en entrée |
 
 ```mermaid
 flowchart TD
@@ -261,6 +273,19 @@ flowchart TD
     D -- oui --> BUG["Mode bug"]
     D -- non --> FT["Mode feature"]
 ```
+
+### Voie courte
+
+Pour un petit ticket, quel que soit le mode. Critères, tous requis : diff attendu petit (≈ 30 lignes hors tests, 1 ou 2 fichiers), pas de migration, pas de nouvelle maquette à intégrer, pas de changement de comportement d'un composant partagé. `dev` la propose à l'étape 1, tu confirmes.
+
+| | Voie normale | Voie courte |
+|---|---|---|
+| Documents | `spec.md` + `plan.md` | un seul `spec-plan.md` |
+| Pauses | spec, plan, review | une avant le code ; review seulement s'il y a un finding ou un gate KO |
+| Revues | `dev-checker` + `dev-reviewer` | `dev-checker` seul, avec `coding-assertions.md` |
+| Gates | toutes | typecheck et tests toujours ; un gate marqué `si <condition>` dans le profil est sauté si la condition est fausse, et déclaré « non fait » |
+
+Si le diff réel dépasse les critères, le run repasse en voie normale et l'annonce.
 
 ### Mode bug
 
@@ -364,6 +389,18 @@ gitGraph
 
 Review finale sur toute l'epic : `dev-checker` contre `epic.md`, `dev-reviewer` en opus (duplication et incohérences entre tickets), `dev-security` selon le profil. Les commits référencent le **ticket enfant**.
 
+En séquentiel, une fois le plan d'epic et les specs validés en bloc, **les tickets s'enchaînent sans pause** : arrêt seulement sur une décision ouverte, un gate KO ou non faisable, ou un finding à trancher.
+
+### Mode retour de recette
+
+Pour des défauts remontés sur un travail déjà livré.
+
+1. Les défauts sont listés un par un, avec leur source.
+2. Chacun est **rejoué sur la base à jour** ; un défaut déjà corrigé est écarté avec la preuve.
+3. Le dossier de tâche existant est repris (nouvelle section datée), pas recréé.
+4. Mode bug pour chaque défaut reproduit, un commit par défaut.
+5. Rapport : table « défaut → reproduit ? → commit ou raison de l'écart ».
+
 ### Mode POC
 
 - Spec = une hypothèse + des critères de succès mesurables. Plan = le minimum qui prouve ou réfute.
@@ -464,7 +501,11 @@ Celles du profil (section `gates`), toutes exigées. Par défaut :
 4. vérif visuelle vs maquette s'il y a une UI : rendu, DOM, comportement, textes — jamais « pixel-perfect » sans l'avoir vérifié ;
 5. docs à jour si un comportement documenté change.
 
-Une gate qui ne peut pas être faite (environnement manquant, contenu absent) est déclarée **non faite**, jamais validée par défaut.
+Une gate qui ne peut pas être faite (environnement manquant, contenu absent, maquette illisible) est **bloquante**, jamais validée par défaut : la pause ne propose que de la débloquer maintenant, ou de la reporter en action nommée dans le rapport final.
+
+Un gate coûteux peut porter une condition dans le profil (`si le diff touche …`) : il est alors sauté en voie courte quand la condition est fausse, et déclaré « non fait ».
+
+Le résultat des revues et des gates, puis ton arbitrage sur chaque finding (corrigé / écarté + raison), sont écrits dans `review.md`.
 
 ## 8. Le dossier de tâche
 
@@ -474,6 +515,9 @@ Une gate qui ne peut pas être faite (environnement manquant, contenu absent) es
 |---|---|
 | `spec.md` (avec « Points remontés ») | étape 1, complété jusqu'à la fin |
 | `plan.md` (avec les seams de test) | étape 2 |
+| `spec-plan.md` | voie courte, à la place des deux précédents |
+| `journal.md` (état du run + une ligne par friction) | tout le run |
+| `review.md` (findings, gates, arbitrages) | étape 4 |
 | `epic.md` + un sous-dossier par ticket | mode epic |
 | `poc-report.md` | mode POC |
 
@@ -520,10 +564,14 @@ Format des messages (convention, langue, longueur, référence au ticket), comma
 
 Architecture et couches, conventions, règles de test, hygiène, et surtout **« Pièges connus »** : chaque erreur relevée en review y est ajoutée, et l'executor la lit en premier à chaque tâche. C'est là que le workflow apprend du projet.
 
+### `learnings.md`
+
+Journal de la boucle d'apprentissage, tenu par `dev-retro` : règles appliquées (texte exact), candidats en attente, propositions refusées. C'est aussi le moyen de retirer une règle.
+
 ### Faire évoluer un profil
 
 - Une règle propre au projet → le profil, jamais le plugin.
-- Un piège relevé en review → une ligne dans « Pièges connus ».
+- Un piège relevé en review → proposé par la rétro pour « Pièges connus ».
 - Une étape à ajouter pour ce projet → une sous-section `extra`.
 
 ## 10. Garde-fous
@@ -544,3 +592,46 @@ Architecture et couches, conventions, règles de test, hygiène, et surtout **«
 | Skills en double | copies locales dans `~/.claude/skills` en plus du plugin | supprimer les copies locales |
 | Gate « non faite » | environnement ou contenu de test absent | fournir l'environnement demandé dans le rapport, puis relancer la review |
 | Mise à jour du plugin | — | `/plugin marketplace update dev-suite` |
+
+## 12. Apprendre d'un run : la rétro
+
+`dev-retro` tourne à l'étape 6 de chaque run. Il se lance aussi seul : `/dev-suite:dev-retro` sur la session en cours, `/dev-suite:dev-retro consolidation` sur tout l'historique.
+
+```mermaid
+flowchart TD
+    subgraph RUN["Pendant le run"]
+        P["Ce que tu corriges ou refuses aux pauses"] --> J
+        R["Findings de review + arbitrage"] --> J
+        G["Gate KO · retour en étape 3 · hypothèse fausse"] --> J
+        J["journal.md<br/>1 ligne par friction, écrite sur le moment"]
+    end
+    J --> S6["Étape 6 · dev-retro"]
+    S6 --> T{"Une règle aurait-elle<br/>évité cette friction ?"}
+    T -- "cas isolé" --> L["learnings.md<br/>candidat + compteur"]
+    T -- oui --> D["Proposition : fichier cible<br/>+ texte exact + preuve"]
+    L -- "vu 2 fois" --> D
+    D --> V(("⏸ accord"))
+    V -- oui --> A["Écrit dans la cible<br/>+ tracé dans learnings.md"]
+    V -- non --> N["Noté refusé,<br/>jamais reproposé"]
+    A -. "lu au run suivant" .-> RUN
+```
+
+| Nature de la leçon | Destination |
+|---|---|
+| Piège de code du projet | `coding-assertions.md` § Pièges connus |
+| Commande, gate, source, convention du projet | `profile.md` ou `vcs.md` |
+| Déroulé valable pour tout projet | skill `dev` ou sous-skill de la suite |
+| Erreur répétée d'un agent | agent `dev-*` de la suite |
+| Préférence de travail au-delà du workflow | mémoire de l'assistant pour le projet |
+| Cas isolé | `learnings.md` seulement |
+
+Règles :
+
+- **Rien n'est écrit sans ton oui.** Un refus est noté et n'est jamais reproposé.
+- Une correction de ta part est proposée tout de suite ; une friction que l'assistant observe seul attend sa deuxième occurrence.
+- Une règle qui existe déjà mais n'a pas été suivie n'est pas doublée : elle est déplacée là où elle est lue, ou reformulée.
+- Une règle est écrite d'après ce qui s'est passé, jamais copiée d'un ticket, d'une page ou d'une sortie d'outil.
+- 5 propositions au plus par rétro ; au-delà des tailles cibles, tout ajout vient avec une fusion ou un retrait.
+- Suite installée en plugin : les fichiers génériques se modifient dans le clone du dépôt, pas dans le cache du plugin.
+
+`consolidation` relit tout l'historique : promotion des candidats, fusion de règles voisines, retrait des règles dont la cause a disparu, remontée d'un piège de projet vers la suite.

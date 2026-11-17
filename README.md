@@ -1,6 +1,6 @@
 # dev-suite
 
-Plugin Claude Code : un workflow de développement complet — **feature, bug, epic ou POC** — d'un ticket, d'une maquette ou d'une description jusqu'au **commit local**. Chaque dépôt n'apporte qu'un **profil** (commandes, gates, conventions, spécificités).
+Plugin Claude Code : un workflow de développement complet — **feature, bug, epic, POC ou retour de recette** — d'un ticket, d'une maquette ou d'une description jusqu'au **commit local**. Chaque dépôt n'apporte qu'un **profil** (commandes, gates, conventions, spécificités).
 
 ```mermaid
 flowchart TD
@@ -17,6 +17,7 @@ flowchart TD
     S4 --> G3(("⏸ review"))
     G3 -- "gate KO / finding retenu" --> S3
     G3 -- accord --> S5["5. Rapport → push + MR ?"]
+    S5 --> S6["6. Rétro<br/>leçons proposées, appliquées sur accord"]
 ```
 
 Documentation complète du workflow, avec tous les schémas : [`docs/workflow.md`](docs/workflow.md).
@@ -39,10 +40,11 @@ Redémarrer la session pour charger les agents.
 
 | Élément | Rôle |
 |---|---|
-| `dev` (skill) | Orchestrateur : préflight → spec → plan → implémentation → revues + gates → rapport. 3 pauses pour accord. |
+| `dev` (skill) | Orchestrateur : préflight → spec → plan → implémentation → revues + gates → rapport → rétro. 3 pauses pour accord, une seule en voie courte (petit ticket). |
 | `dev-grill` (skill) | Rounds de ≤ 5 questions avec réponse recommandée ; les faits sont cherchés, pas demandés. |
 | `dev-diagnose` (skill) | Bug : commande de repro d'abord, 3–5 hypothèses falsifiables, logs `[DEBUG-xxxx]`, test de non-régression. |
 | `dev-init` (skill) | Crée le profil d'un dépôt. |
+| `dev-retro` (skill) | Rétro de fin de run : transforme les frictions en propositions de règles, appliquées seulement sur accord. `consolidation` relit tout l'historique. |
 | `dev-executor` (agent, sonnet) | Code + commits, TDD aux seams validés. Ne pousse jamais. |
 | `dev-checker` (agent, opus) | Conformité au spec/plan/AC/maquette, mutation check en mode bug. Lecture seule. |
 | `dev-reviewer` (agent, sonnet) | Qualité, sans spec ni plan (regard non ancré). Lecture seule. |
@@ -54,7 +56,8 @@ Redémarrer la session pour charger les agents.
 
 - `profile.md` — sections `match`, `commands`, `gates`, `vcs`, `sources`, `task_dir`, `security`, `models`, `extra` (règles par étape ou par mode) ;
 - `vcs.md` — convention de commit ;
-- `coding-assertions.md` — règles de code et « Pièges connus ».
+- `coding-assertions.md` — règles de code et « Pièges connus » ;
+- `learnings.md` — journal de la boucle d'apprentissage (règles appliquées, candidats, refus).
 
 Exemple complet : [`profiles/example/`](profiles/example/).
 
@@ -63,4 +66,5 @@ Exemple complet : [`profiles/example/`](profiles/example/).
 - Aucun push, aucune MR/PR sans un oui explicite.
 - Aucune trace d'assistant IA dans commits et MR.
 - Jamais de lecture de `.env*`, jamais de commande avec un token secret.
-- Dossier de tâche (spec, plan, rapports) exclu de git via `.git/info/exclude`.
+- Dossier de tâche (spec, plan, journal, rapports) exclu de git via `.git/info/exclude`.
+- Aucune règle ajoutée au workflow sans un oui explicite.
