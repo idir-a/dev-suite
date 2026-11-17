@@ -14,7 +14,7 @@
 ## gates
 1. typecheck : 0 erreur.
 2. Tests : aucun nouvel échec vs baseline.
-3. `pnpm build` OK.
+3. `pnpm build` OK — en voie courte : `si` le diff touche `src/pages/`, la config de build ou les dépendances.
 4. Vérif visuelle vs maquette si UI.
 5. `docs/` à jour si un comportement documenté change.
 

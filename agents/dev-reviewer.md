@@ -30,4 +30,4 @@ Modifier des fichiers, commit, lire un `.env*`.
 
 ## Rapport (≤ 400 mots)
 
-Findings classés du plus grave au moins grave : `file:line` — problème — scénario concret qui casse — correctif en une ligne — `confirmé` / `plausible`. Aucun finding → le dire.
+Findings classés du plus grave au moins grave : `file:line` — problème — scénario concret qui casse — correctif en une ligne — `confirmé` / `plausible`. Aucun finding → le dire. Dernière ligne : « Frictions rencontrées » (règle de `coding-assertions.md` manquante ou ambiguë, commande qui a piégé) ou « aucune ».

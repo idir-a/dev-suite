@@ -1,12 +1,12 @@
 ---
 name: dev
-description: Workflow de développement complet et réutilisable — feature, bug, epic ou POC — d'un ticket, d'une maquette ou d'une description jusqu'au commit local, piloté par le profil du dépôt (~/.claude/dev-profiles/). Utiliser quand l'utilisateur lance /dev-suite:dev (ou /dev) ou demande de développer une feature, une epic, un POC ou de corriger un bug dans un dépôt qui a un profil.
+description: Workflow de développement complet et réutilisable — feature, bug, epic, POC ou retour de recette — d'un ticket, d'une maquette ou d'une description jusqu'au commit local, piloté par le profil du dépôt (~/.claude/dev-profiles/). Utiliser quand l'utilisateur lance /dev-suite:dev (ou /dev) ou demande de développer une feature, une epic, un POC, de corriger un bug ou de traiter un retour de recette dans un dépôt qui a un profil.
 argument-hint: <ticket | poc <ticket|texte> | URL maquette | description> [profil=<nom>] [sécu]
 ---
 
 # /dev
 
-Orchestrateur autonome : spec, plan et présentation des revues restent dans la session ; le code est délégué à `dev-suite:dev-executor`, les revues à `dev-suite:dev-checker`, `dev-suite:dev-reviewer` et `dev-suite:dev-security`. Trois pauses pour l'accord de l'utilisateur : après le spec, le plan et la review.
+Orchestrateur autonome : spec, plan et présentation des revues restent dans la session ; le code est délégué à `dev-suite:dev-executor`, les revues à `dev-suite:dev-checker`, `dev-suite:dev-reviewer` et `dev-suite:dev-security`. Trois pauses pour l'accord de l'utilisateur : après le spec, le plan et la review (une seule avant le code en voie courte). Chaque run se termine par une rétro (`dev-suite:dev-retro`).
 
 ## Profil (en tout premier)
 
@@ -18,6 +18,7 @@ Orchestrateur autonome : spec, plan et présentation des revues restent dans la 
 ## Règles non négociables
 
 - Dossier de tâche `<task_dir>/<yyyy_mm>/<yyyy_mm_dd>_<ticket>-<slug>/` (défaut `task_dir` : `.dev/tasks/`), exclu par `.git/info/exclude`, **jamais commité**.
+- **`journal.md`** dans le dossier de tâche, tenu pendant tout le run. En-tête d'état mis à jour à chaque étape : mode, voie, branche, base, `<sha avant>`, étape atteinte, décisions validées. Puis une ligne par friction, **écrite au moment où elle arrive** (le contexte peut être compacté avant la fin) : correction ou refus à une pause (proposé → décidé), finding de review et son arbitrage, gate KO, retour en étape 3, hypothèse fausse, piège d'outil, « Frictions rencontrées » des rapports d'agents. Après une compaction : relire `journal.md` avant toute action.
 - Commit local uniquement : **aucun push, aucune MR/PR sans un oui explicite**, demandé à chaque fois.
 - **Aucune trace de Claude** dans commits, MR/PR, commentaires du tracker.
 - Jamais lire un `.env*` ; jamais exécuter une commande qui exige un token secret : la donner à l'utilisateur.
@@ -32,10 +33,21 @@ Orchestrateur autonome : spec, plan et présentation des revues restent dans la 
 | Bug | type Bug, ou description d'un dysfonctionnement |
 | Epic | type Epic |
 | POC | argument `poc`, type Spike, ou « POC » dans le résumé/labels |
+| Retour de recette | ticket déjà traité (dossier de tâche ou commits existants), ou tableau/commentaires de recette en entrée |
+
+### Voie courte
+
+Critères, tous requis : diff attendu petit (≈ 30 lignes hors tests, 1 ou 2 fichiers), pas de migration, pas de nouvelle maquette à intégrer, pas de changement de comportement d'un composant partagé. La proposer à l'étape 1 ; l'utilisateur confirme.
+
+- Spec et plan dans un seul `spec-plan.md` → **une pause** avant le code (grilling seulement s'il reste une décision ouverte).
+- **Une revue** : `dev-suite:dev-checker` seul, briefé avec `spec-plan.md` **et** `coding-assertions.md` ; `dev-suite:dev-security` selon le profil.
+- Gates : typecheck et tests toujours ; un gate marqué `si <condition>` dans le profil est sauté quand la condition est fausse, et déclaré « non fait » dans le rapport.
+- Pause de review seulement s'il y a un finding à trancher ou un gate KO ; sinon enchaîner sur l'étape 5.
+- Le diff réel dépasse les critères → repasser en voie normale et l'annoncer.
 
 ## Format des pauses et rapports
 
-- Chaque pause commence par l'état (« Étape 2/5 — plan. À valider : … ») puis la décision attendue ; une liste de tâches (une par étape, une seule en cours) tient la progression.
+- Chaque pause commence par l'état (« Étape 2/5 — plan. À valider : … ») puis la décision attendue ; une liste de tâches (une par étape, rétro comprise, une seule en cours) tient la progression.
 - Au plus 5 décisions par pause, les plus bloquantes d'abord ; le reste en « pour info » ; le détail reste dans les fichiers du dossier de tâche, cités par chemin.
 - Review : gates passées en une ligne, puis les findings à trancher ; un écart hors périmètre va dans « Points remontés ».
 - Rapport final : actions utilisateur numérotées avec estimation concrète (« jouer la migration : ~2 min »), puis la seule question push + MR.
@@ -45,6 +57,7 @@ Orchestrateur autonome : spec, plan et présentation des revues restent dans la 
 0. Titre de session dès le ticket lu (`mcp__ccd_session_mgmt__set_session_title`, `session_id: "self"`, si l'outil existe) : `<ticket> <ce qui va être fait>`.
    Lancé en plan mode : collecte en lecture seule (étapes 1 et 2) d'abord, préflight git une fois le plan validé.
 1. `git fetch <remote> <base>` (profil § vcs ; défaut `origin`, branche par défaut du dépôt).
+   - **Reprise ?** Un dossier de tâche existe pour ce ticket → lire l'en-tête de `journal.md` et `git log <base>..<branche>`, annoncer l'étape atteinte et reprendre là (ou basculer en Mode retour de recette si le travail était livré), au lieu de repartir du spec.
    - **Travail déjà entamé ?** `git ls-remote --heads <remote>` filtré sur le(s) ticket(s), plus statut et assigné du tracker. Branche existante ou autre dev assigné → le signaler et demander la base. Branche locale et distante divergentes → `git diff <local> <distant> -- <chemins>` avant de choisir.
 2. Branche simple par défaut : `git status --short` vide (sinon stop et question), puis `git switch --no-track -c <prefix>/<ticket>-<slug> <base>`. Worktree seulement si l'utilisateur le demande : **hors du dépôt** (`git worktree add ../<repo>-wt/<slug> --no-track -b <branche> <base>`), install des dépendances, `.env*` copiés par l'utilisateur.
    `<prefix>` : `feat`, `fix`, `poc` (profil § vcs pour d'autres conventions).
@@ -64,6 +77,12 @@ Orchestrateur autonome : spec, plan et présentation des revues restent dans la 
 ## 2. Plan
 
 Phases ordonnées, fichiers touchés, réutilisation de l'existant, impacts listés par le profil (§ extra), docs à mettre à jour. Toute omission vs ticket ou maquette est listée et soumise.
+
+**Ajouts hors ticket** : toute fonction, variante, prop, composant ou icône que le ticket ne demande pas est soit justifiée par un AC, soit listée ici et soumise à la pause ; par défaut, on ne l'ajoute pas.
+
+**Composant partagé** : tout changement de comportement d'un composant ou util utilisé ailleurs est annoncé ici, avec la liste de ses autres usages (grep) et l'effet attendu sur chacun.
+
+**Preuve de lecture des maquettes** (s'il y a une UI) : table « écran → nœud de maquette lu → screenshot » ; une ligne sans screenshot = maquette non lue, à lire avant la pause.
 
 **Seams de test** : les interfaces publiques testées, au plus haut niveau possible, validées à cette pause. Rien à tester (pure mise en page) → l'écrire.
 
@@ -91,6 +110,10 @@ Présentation en sections séparées **Conformité**, **Qualité**, **Sécurité
 4. vérif visuelle vs screenshots de maquette s'il y a une UI : rendu, DOM, comportement, textes ; jamais « pixel-perfect » sans l'avoir vérifié ; un état (survol, clic) se mesure après sa transition ;
 5. docs à jour si un comportement documenté change.
 
+**Gate non faisable = bloquante** : une gate qui ne peut pas tourner (environnement de recette vide, maquette illisible, navigateur inadapté) n'est jamais « passée ». La pause ne propose alors que deux issues : la débloquer maintenant, ou la reporter en action utilisateur nommée dans le rapport final. Un ticket n'est jamais clos « aucun code nécessaire » sans preuve visuelle.
+
+Écrire `review.md` dans le dossier de tâche : findings par axe, résultat de chaque gate, puis l'arbitrage de l'utilisateur (corrigé / écarté + raison).
+
 Gate KO, finding non écarté (avec raison) par l'utilisateur, ou finding sécurité critique/haut → retour en 3 avec la liste. Revues relancées sur le diff des correctifs.
 
 ⏸ Pause : accord sur la review.
@@ -102,6 +125,10 @@ Rapport : `git log --oneline <base>..HEAD`, fichiers touchés, actions à faire 
 `fixup!` restants : proposer d'abord (question séparée) `GIT_SEQUENCE_EDITOR=: git rebase -i --autosquash <base>`, seulement si la branche n'a jamais été poussée, puis relancer typecheck + tests ; preuve : `git diff <sha avant rebase> HEAD` vide. Branche déjà poussée : commits normaux, jamais de force push.
 
 Sur oui : création de MR/PR selon profil § vcs (`glab`, `gh`, ou push options GitLab sur une seule ligne). Titre et description relus : aucune trace de Claude.
+
+## 6. Rétro
+
+Après la réponse à la question push + MR (oui ou non), et aussi quand le run s'arrête avant la fin : `dev-suite:dev-retro` sur ce run. Dernière ligne du run : règles appliquées, ou « rien à apprendre ».
 
 ## Mode bug
 
@@ -120,7 +147,7 @@ Sur oui : création de MR/PR selon profil § vcs (`glab`, `gh`, ou push options 
 3. Plan d'epic sans code : `<task_dir>/…/<epic>-<slug>/epic.md` = tickets, ordre, dépendances, fichiers touchés par ticket ; spec/plan de chaque ticket dans un sous-dossier.
 4. ⏸ Pause : accord + choix **epic page**, **séquentiel** ou **parallèle** (recommander « epic page » quand ses critères sont remplis) + specs **en bloc** ou **ticket par ticket**.
 5. Branche d'epic `feat/<epic>-<slug>`.
-6. Séquentiel : étapes 1 à 4 ticket par ticket sur la branche d'epic (Mode bug pour un enfant Bug).
+6. Séquentiel : étapes 1 à 4 ticket par ticket sur la branche d'epic (Mode bug pour un enfant Bug). Specs validés en bloc → **les tickets s'enchaînent sans pause** : arrêt seulement sur une décision ouverte, un gate KO ou non faisable, ou un finding à trancher ; une ligne d'état par ticket terminé.
 7. Parallèle : deux sessions ne committent **jamais** sur la même branche ; chaque ticket indépendant dans sa session + worktree hors dépôt, sous-branche `feat/<epic>-<slug>--<ticket>` ; deux tickets qui touchent les mêmes fichiers jamais en même temps ; ticket fini → merge local `--no-ff` dans la branche d'epic sur accord.
 8. Review finale sur tout le diff de l'epic : `dev-suite:dev-checker` contre `epic.md`, `dev-suite:dev-reviewer` en `opus` (duplication et incohérences entre tickets), `dev-suite:dev-security` selon le profil, gates ; puis étape 5.
 
@@ -135,6 +162,14 @@ Critères (tous requis) : une seule page et une seule maquette ; les tickets tou
 3. `dev-suite:dev-executor` enchaîne les phases, **un commit par ticket enfant** (+ nettoyage référencé sur l'epic).
 4. Review une fois sur tout le diff, vérif visuelle de la page entière (desktop + mobile). ⏸
 5. Étape 5 avec la table « AC → ticket → commit ».
+
+## Mode retour de recette
+
+1. Lister les défauts un par un, avec leur source (commentaire, ligne du tableau, capture) ; critères du statut « KO » : profil § extra.
+2. Vérifier que chacun **se reproduit sur la base à jour** (`dev-suite:dev-diagnose` § 1) ; un défaut déjà corrigé est écarté avec la preuve (commit, capture).
+3. Reprendre le dossier de tâche existant : nouvelle section datée dans le spec, pas un nouveau dossier. Branche : celle du ticket si elle n'est pas fusionnée, sinon une nouvelle `fix/` depuis la base.
+4. Mode bug pour chaque défaut reproduit, **un commit par défaut** ; voie courte si ses critères sont remplis.
+5. Rapport : table « défaut → reproduit ? → commit ou raison de l'écart ».
 
 ## Mode POC
 

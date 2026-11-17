@@ -22,6 +22,8 @@ Impossible → le dire, lister ce qui a été tenté, demander un accès, un art
 
 Vérifier que c'est le symptôme décrit, pas un voisin. Réduire le scénario un élément à la fois jusqu'à ce que chaque élément restant soit nécessaire.
 
+Symptôme sur un seul navigateur : le rejouer d'abord dans un profil vierge, sans extension ni bloqueur, avant toute hypothèse sur le code.
+
 ## 3. Hypothèses
 
 3 à 5 hypothèses classées, chacune falsifiable : « si X est la cause, changer Y fait disparaître le bug ». **Les montrer à l'utilisateur** avant de tester (il peut re-classer) ; sans réponse, continuer avec son propre classement.

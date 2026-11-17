@@ -25,4 +25,4 @@ Modifier le travail, le spec ou le plan ; corriger ; commit ; lire un `.env*`.
 
 ## Rapport (≤ 400 mots)
 
-Verdict en tête (conforme / conforme avec réserves / non conforme), puis tableau critère → statut → preuve, puis findings classés par gravité avec correctif suggéré en une ligne.
+Verdict en tête (conforme / conforme avec réserves / non conforme), puis tableau critère → statut → preuve, puis findings classés par gravité avec correctif suggéré en une ligne. Dernière ligne : « Frictions rencontrées » (commande qui a piégé, critère ambigu, règle manquante) ou « aucune ».

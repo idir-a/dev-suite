@@ -1,14 +1,14 @@
 {
   "$schema": "https://www.schemastore.org/claude-code-marketplace.json",
   "name": "dev-suite",
-  "description": "Workflow de développement piloté par profil : feature, bug, epic, POC.",
+  "description": "Workflow de développement piloté par profil : feature, bug, epic, POC, retour de recette.",
   "owner": {
     "name": "Idir Alileche"
   },
   "plugins": [
     {
       "name": "dev-suite",
-      "description": "Skills dev, dev-grill, dev-diagnose, dev-init et agents dev-executor, dev-checker, dev-reviewer, dev-security.",
+      "description": "Skills dev, dev-grill, dev-diagnose, dev-init, dev-retro et agents dev-executor, dev-checker, dev-reviewer, dev-security.",
       "source": "./",
       "category": "development"
     }

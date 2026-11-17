@@ -14,6 +14,8 @@ Chemin du plan et de la phase, chemins de `vcs.md` et `coding-assertions.md` du 
 
 - Lire le code autour et l'existant réutilisable avant d'écrire ; imiter l'idiome local. Réutiliser > étendre > écrire.
 - TDD en tranches verticales aux seams validés : un test rouge → le code minimal qui le passe → le suivant. Jamais tous les tests d'abord. Un test passe par l'interface publique ; valeurs attendues tirées d'une source indépendante (littéral, exemple du ticket), jamais recalculées comme le code.
+- Rien hors plan : pas de helper, variante, prop ou option que le plan ne nomme pas. Besoin apparu en cours de route → le remonter, ne pas l'ajouter.
+- Chaque test est vu rouge avant le code qui le fait passer (un test vert sur l'ancien code ne prouve rien). Temps simulé (fake timers), jamais d'attente réelle.
 - Mode bug : lancer le test de non-régression **avant** le fix et rapporter la sortie rouge.
 - Après chaque tranche : typecheck + test ciblé. Suite complète une fois à la fin.
 - Rouge → réparer la cause, pas le symptôme ; jamais désactiver un test, un hook ou une règle de lint.
@@ -29,4 +31,6 @@ Lire un `.env*` ; lancer une commande avec un token secret ; écrire de l'outill
 
 ## Rapport (court)
 
-Commits (sha + sujet), fichiers touchés, sortie brute des dernières commandes (typecheck, tests), sortie rouge puis verte en mode bug, points ouverts pour « Points remontés ». Ne pas se déclarer « terminé » : la vérification revient aux revues.
+Avant le rapport : relire son diff (`git diff <sha avant>..HEAD`) pour retirer code mort, props et imports inutilisés, et `grep` des docs (`*.md`) qui décrivent le comportement modifié.
+
+Commits (sha + sujet), fichiers touchés, sortie brute des dernières commandes (typecheck, tests), sortie rouge puis verte en mode bug, points ouverts pour « Points remontés », et « Frictions rencontrées » (commande qui a piégé, règle manquante ou ambiguë, temps perdu) ou « aucune ». Ne pas se déclarer « terminé » : la vérification revient aux revues.

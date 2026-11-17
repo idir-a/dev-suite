@@ -1,6 +1,6 @@
 ---
 name: dev-init
-description: Créer ou mettre à jour le profil /dev d'un dépôt dans ~/.claude/dev-profiles/<nom>/ (profile.md, vcs.md, coding-assertions.md), à partir du dépôt et de quelques questions. Utiliser quand /dev ne trouve pas de profil, ou quand l'utilisateur demande d'initialiser /dev sur un projet.
+description: Créer ou mettre à jour le profil /dev d'un dépôt dans ~/.claude/dev-profiles/<nom>/ (profile.md, vcs.md, coding-assertions.md, learnings.md), à partir du dépôt et de quelques questions. Utiliser quand /dev ne trouve pas de profil, ou quand l'utilisateur demande d'initialiser /dev sur un projet.
 argument-hint: [nom du profil]
 ---
 
@@ -40,7 +40,7 @@ Le profil vit **hors du dépôt** : rien n'est écrit dans le dépôt (`git stat
 - dev : `…`
 
 ## gates
-1. …
+1. … (un gate coûteux peut porter `si <condition sur le diff>` : sauté en voie courte quand elle est fausse)
 
 ## vcs
 - remote MR : `origin` ; base : `develop` ; préfixes : feat, fix, poc
@@ -69,6 +69,8 @@ auto
 
 `coding-assertions.md` : architecture et couches, conventions de code, tests (seams, pas de test tautologique ni couplé), hygiène, section « Pièges connus » vide.
 
+`learnings.md` : titre seul (`# Journal d'apprentissage /dev — <nom>`) ; il est tenu ensuite par `dev-suite:dev-retro` à la fin de chaque run.
+
 ## 4. Fin
 
-Afficher les trois chemins et les sections laissées vides. Proposer de lancer `/dev-suite:dev` sur un premier ticket.
+Afficher les quatre chemins et les sections laissées vides. Proposer de lancer `/dev-suite:dev` sur un premier ticket.
